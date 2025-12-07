@@ -21,3 +21,11 @@ export interface ModelConfig {
   id: string;
   name: string;
 }
+
+export interface Attachment {
+  id: string;
+  type: 'image' | 'file';
+  mimeType: string;
+  data: string; // Base64 string
+  name: string;
+}
