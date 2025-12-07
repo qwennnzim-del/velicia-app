@@ -1,17 +1,22 @@
+
 import React from 'react';
 import { APP_NAME, APP_VERSION, COPYRIGHT_TEXT } from '../constants';
+import { IconAppLogo } from './Icons';
 
 const WelcomeScreen: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col items-center justify-center h-full relative p-4">
-      <div className="flex flex-col items-center justify-center space-y-4 mb-20">
-        <h1 className="text-6xl md:text-8xl font-bold tracking-tighter text-center">
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 animate-gradient-x bg-[length:200%_auto]">
-            {APP_NAME}
-          </span>
-        </h1>
-        <p className="text-gray-400 text-2xl md:text-3xl font-light tracking-wide">
-          How Can Help You?
+      <div className="flex flex-col items-center justify-center space-y-6 mb-20">
+        <div className="flex items-center gap-3">
+          <IconAppLogo className="w-16 h-16 md:w-20 md:h-20 text-white" />
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tighter text-center">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 animate-gradient-x bg-[length:200%_auto]">
+              {APP_NAME}
+            </span>
+          </h1>
+        </div>
+        <p className="text-gray-400 text-xl md:text-2xl font-light tracking-wide text-center">
+          How Can I Help You?
         </p>
       </div>
 
