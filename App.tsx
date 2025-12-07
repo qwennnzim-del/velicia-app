@@ -5,7 +5,7 @@ import WelcomeScreen from './components/WelcomeScreen';
 import ChatBubble from './components/ChatBubble';
 import { IconMenu, IconMessagePlus, IconSend, IconChevronDown, IconPaperclip, IconX, IconCheck, IconAppLogo } from './components/Icons';
 import { Message, ChatSession, Sender } from './types';
-import { MODELS, DEFAULT_MODEL, APP_NAME } from './constants';
+import { MODELS, DEFAULT_MODEL } from './constants';
 import { streamResponse } from './services/geminiService';
 import { streamPollinationsResponse } from './services/pollinationsService';
 
