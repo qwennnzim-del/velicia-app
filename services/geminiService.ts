@@ -1,5 +1,5 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
-import { Message, Sender } from '../types';
+import { Message, Sender, Attachment } from '../types';
 
 // Lazy initialization to prevent crash on startup if key is missing
 let aiInstance: GoogleGenAI | null = null;
@@ -20,13 +20,13 @@ const getAIClient = () => {
 export const streamResponse = async (
   modelId: string,
   history: Message[],
-  newMessage: string
+  newMessage: string,
+  attachments: Attachment[] = []
 ): Promise<AsyncGenerator<string, void, unknown>> => {
   try {
     const ai = getAIClient();
     
     // Convert app history to Gemini format
-    // Note: We filter out the very last user message because we send it as the `message` arg
     const previousHistory = history.map(msg => ({
       role: msg.sender === Sender.USER ? 'user' : 'model',
       parts: [{ text: msg.text }],
@@ -41,7 +41,35 @@ export const streamResponse = async (
       }
     });
 
-    const result = await chat.sendMessageStream({ message: newMessage });
+    // Prepare current message content
+    // If there are attachments, we need to send a complex object with parts
+    let messageContent: any = newMessage;
+
+    if (attachments && attachments.length > 0) {
+      const parts = [];
+      
+      // Add attachments
+      for (const att of attachments) {
+        // Remove data:image/png;base64, prefix
+        const base64Data = att.data.split(',')[1];
+        
+        parts.push({
+          inlineData: {
+            mimeType: att.mimeType,
+            data: base64Data
+          }
+        });
+      }
+
+      // Add text prompt
+      if (newMessage.trim()) {
+        parts.push({ text: newMessage });
+      }
+
+      messageContent = { parts };
+    }
+
+    const result = await chat.sendMessageStream({ message: messageContent });
 
     async function* generator() {
       for await (const chunk of result) {
