@@ -15,7 +15,7 @@
             },
             animation: {
               'gradient-x': 'gradient-x 3s ease infinite',
-              'spin-slow': 'spin 4s linear infinite',
+              'spin-slow': 'spin 3s linear infinite',
             },
             keyframes: {
               'gradient-x': {
@@ -28,6 +28,14 @@
                   'background-position': 'right center',
                 },
               },
+              'spin': {
+                'from': {
+                  'transform': 'rotate(0deg)',
+                },
+                'to': {
+                  'transform': 'rotate(360deg)',
+                },
+              }
             },
           },
         },
