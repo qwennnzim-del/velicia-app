@@ -1,7 +1,21 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { Message, Sender } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Lazy initialization to prevent crash on startup if key is missing
+let aiInstance: GoogleGenAI | null = null;
+
+const getAIClient = () => {
+  if (!aiInstance) {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+      console.warn("API Key is missing. Chat functionality will not work.");
+      // We still return an instance, but it will fail on call, preventing white screen on load
+      return new GoogleGenAI({ apiKey: "" });
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+};
 
 export const streamResponse = async (
   modelId: string,
@@ -9,6 +23,8 @@ export const streamResponse = async (
   newMessage: string
 ): Promise<AsyncGenerator<string, void, unknown>> => {
   try {
+    const ai = getAIClient();
+    
     // Convert app history to Gemini format
     // Note: We filter out the very last user message because we send it as the `message` arg
     const previousHistory = history.map(msg => ({
