@@ -1,4 +1,3 @@
-
 import { Message, Sender } from '../types';
 
 export const streamPollinationsResponse = async (
@@ -11,7 +10,7 @@ export const streamPollinationsResponse = async (
     const messages = [
       { 
         role: 'system', 
-        content: 'You are VeliciaAI, a helpful, fast, and minimalist AI assistant developed by Cutsz Indonesian Inc. You are professional, concise, and friendly.' 
+        content: "You are VeliciaAI, a high-performance, minimalist AI assistant developed by Cutsz Indonesian Inc. You must ALWAYS identify yourself as VeliciaAI. Do NOT refer to yourself as ChatGPT, OpenAI, or any other identity. Be helpful, professional, precise, and concise." 
       },
       ...history.map(msg => ({
         role: msg.sender === Sender.USER ? 'user' : 'assistant',
