@@ -10,7 +10,8 @@ export default defineConfig(({ mode }) => {
     define: {
       // Inject the API key into the build
       // Supports both VITE_API_KEY (from previous steps) or API_KEY (standard)
-      'process.env.API_KEY': JSON.stringify(env.VITE_API_KEY || env.API_KEY),
+      // Added || '' to prevent undefined error during build
+      'process.env.API_KEY': JSON.stringify(env.VITE_API_KEY || env.API_KEY || ''),
     }
   }
 })
