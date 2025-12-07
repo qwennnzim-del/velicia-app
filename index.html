@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>VeliciaAI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -34,17 +34,28 @@
       };
     </script>
     <style>
+      html, body, #root {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden; /* Lock the main window scroll */
+        overscroll-behavior: none; /* Disable rubber-banding/bounce */
+        -webkit-overflow-scrolling: touch;
+      }
+      
       body {
         background-color: #050505;
         color: #ffffff;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       }
+      
       /* Custom scrollbar for webkit */
       ::-webkit-scrollbar {
         width: 6px;
       }
       ::-webkit-scrollbar-track {
-        background: #050505;
+        background: transparent;
       }
       ::-webkit-scrollbar-thumb {
         background: #333;
@@ -54,7 +65,7 @@
         background: #555;
       }
     </style>
-  <script type="importmap">
+<script type="importmap">
 {
   "imports": {
     "react": "https://aistudiocdn.com/react@^19.2.1",

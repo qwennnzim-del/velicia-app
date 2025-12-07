@@ -158,7 +158,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-background text-white overflow-hidden font-sans">
+    // Use 100dvh (Dynamic Viewport Height) to fix mobile browser bar issues
+    <div className="flex h-[100dvh] bg-background text-white overflow-hidden font-sans">
       
       <Sidebar 
         isOpen={isSidebarOpen} 
@@ -169,11 +170,11 @@ const App: React.FC = () => {
         onNewChat={handleNewChat}
       />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col relative w-full h-full">
+      {/* Main Content Column */}
+      <div className="flex-1 flex flex-col relative w-full h-full max-w-5xl mx-auto">
         
-        {/* Header Controls */}
-        <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
+        {/* Header - Fixed/Absolute at top */}
+        <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-4 pointer-events-none bg-gradient-to-b from-background via-background/80 to-transparent">
           {/* Menu Button (Top Left) */}
           <button 
             onClick={() => setIsSidebarOpen(true)}
@@ -195,8 +196,8 @@ const App: React.FC = () => {
           </button>
         </div>
 
-        {/* Chat Area - Increased bottom padding to pb-60 to fix text covering issues */}
-        <div className="flex-1 overflow-y-auto w-full max-w-5xl mx-auto px-4 pt-20 pb-60 scroll-smooth">
+        {/* Chat Area - Takes remaining space (flex-1) and scrolls internally */}
+        <div className="flex-1 overflow-y-auto w-full px-4 pt-20 pb-4 scroll-smooth">
           {(!currentSessionId || messages.length === 0) ? (
             <WelcomeScreen />
           ) : (
@@ -204,13 +205,13 @@ const App: React.FC = () => {
               {messages.map((msg) => (
                 <ChatBubble key={msg.id} message={msg} />
               ))}
-              <div ref={messagesEndRef} className="h-4" />
+              <div ref={messagesEndRef} className="h-2" />
             </div>
           )}
         </div>
 
-        {/* Floating Input Area (Sticky Bottom) */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-gradient-to-t from-background via-background to-transparent z-30">
+        {/* Input Area - Static block at bottom (flex-none) */}
+        <div className="flex-none w-full p-4 md:p-6 bg-background z-30">
           <div className="max-w-3xl mx-auto relative group">
             
             {/* The Conic Glow Effect Wrapper */}
