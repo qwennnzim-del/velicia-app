@@ -4,13 +4,13 @@ export const APP_VERSION = "Version 1.0";
 export const COPYRIGHT_TEXT = "2025 Cutsz Indonesian Inc.";
 
 export const MODELS = [
-  // Utama - Text Reasoning (OpenAI)
+  // Utama - Text Reasoning (OpenAI via Pollinations)
   { 
     id: 'openai', 
     name: 'Velicia X4.2',
     description: 'Advanced reasoning, coding, research, search.'
   },
-  // Generasi Gambar (Flux)
+  // Generasi Gambar (Flux via Pollinations)
   { 
     id: 'flux', 
     name: 'Velicia Canvas',
@@ -26,12 +26,12 @@ export const MODELS = [
   {
     id: 'hf_deepseek',
     name: 'Velicia DeepThink R1',
-    description: 'Deep reasoning & logic (Powered by DeepSeek).'
+    description: 'Deep reasoning & logic (DeepSeek 32B).'
   },
   {
     id: 'hf_sd35',
     name: 'Velicia Realism',
-    description: 'Photorealistic generation (SD 3.5 Large).'
+    description: 'Hyper-fast photorealistic generation (Flux Schnell).'
   }
 ];
 
