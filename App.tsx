@@ -12,6 +12,7 @@ import { Message, ChatSession, Sender, Attachment } from './types';
 import { MODELS, DEFAULT_MODEL } from './constants';
 import { streamResponse } from './services/geminiService';
 import { streamPollinationsResponse } from './services/pollinationsService';
+import { streamHuggingFaceResponse } from './services/huggingFaceService';
 
 // Thinking Indicator Component with Search Support
 const ThinkingIndicator = ({ isSearching = false }: { isSearching?: boolean }) => {
@@ -233,6 +234,9 @@ const App: React.FC = () => {
       
       if (selectedModel.startsWith('gemini')) {
         stream = await streamResponse(selectedModel, apiHistory, input, currentAttachments);
+      } else if (selectedModel.startsWith('hf_')) {
+        // HUGGING FACE SERVICE ROUTING
+        stream = await streamHuggingFaceResponse(selectedModel, apiHistory, input, currentAttachments);
       } else {
         stream = await streamPollinationsResponse(selectedModel, apiHistory, input, currentAttachments);
       }
@@ -262,7 +266,7 @@ const App: React.FC = () => {
           if (msgIndex !== -1) {
             newMessages[msgIndex] = { 
               ...newMessages[msgIndex], 
-              text: "Sorry, I encountered an error processing your request." 
+              text: "Sorry, I encountered an error processing your request. Please check your connection or API keys." 
             };
           }
           return { ...s, messages: newMessages };
