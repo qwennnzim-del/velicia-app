@@ -3,8 +3,10 @@ import { Message, Sender, Attachment } from '../types';
 const HF_TOKEN = process.env.HF_TOKEN;
 
 const MODELS_MAP: Record<string, string> = {
-  'hf_deepseek': 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B',
-  'hf_sd35': 'stabilityai/stable-diffusion-3.5-large',
+  // Switched to 32B Qwen variant for better stability on free tier
+  'hf_deepseek': 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B',
+  // Switched to Flux Schnell for hyper-fast generation (avoids timeouts)
+  'hf_sd35': 'black-forest-labs/FLUX.1-schnell',
 };
 
 export const streamHuggingFaceResponse = async (
@@ -21,7 +23,7 @@ export const streamHuggingFaceResponse = async (
   const hfModel = MODELS_MAP[modelId];
   const url = `https://api-inference.huggingface.co/models/${hfModel}`;
 
-  // === IMAGE GENERATION (Stable Diffusion) ===
+  // === IMAGE GENERATION (Flux Schnell) ===
   if (modelId === 'hf_sd35') {
     async function* imageGenerator() {
       try {
@@ -36,16 +38,18 @@ export const streamHuggingFaceResponse = async (
 
         if (!response.ok) {
            const err = await response.text();
-           // Handle "Model is loading" 503 error
            if (response.status === 503) {
-             throw new Error("Velicia Realism is warming up (Cold Boot). Please try again in 30 seconds.");
+             throw new Error("Velicia Realism (Flux) is warming up. Please try again in 10 seconds.");
            }
-           throw new Error(`HF Error: ${err}`);
+           // Check for common fetch errors
+           if (response.status === 401) {
+             throw new Error("Invalid Hugging Face Token.");
+           }
+           throw new Error(`HF Error (${response.status}): ${err}`);
         }
 
         const blob = await response.blob();
         
-        // Fix: Use FileReader to convert Blob to Data URL (Browser compatible replacement for Buffer)
         const dataUrl = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result as string);
@@ -56,35 +60,38 @@ export const streamHuggingFaceResponse = async (
         yield `![Generated Image](${dataUrl})`;
 
       } catch (error: any) {
-        yield `Error generating image: ${error.message}`;
+        console.error("HF Image Gen Error:", error);
+        // Fallback message for fetch failures (CORS/Network)
+        if (error.message === 'Failed to fetch') {
+            yield "Error: Connection failed. This usually happens if the model is busy or your network blocked the request. Please try again.";
+        } else {
+            yield `Error generating image: ${error.message}`;
+        }
       }
     }
     return imageGenerator();
   }
 
-  // === TEXT GENERATION (DeepSeek R1) ===
+  // === TEXT GENERATION (DeepSeek R1 - Qwen 32B) ===
   
   // 1. Prepare Prompt with Velicia Identity
-  const systemPrompt = "You are VeliciaAI, a high-performance, minimalist AI assistant developed by Cutsz Indonesian Inc. You must ALWAYS identify yourself as VeliciaAI. Do NOT refer to yourself as DeepSeek, Llama, or any other identity. Be helpful, professional, precise, and concise.";
+  const systemPrompt = "You are VeliciaAI, a high-performance, minimalist AI assistant developed by Cutsz Indonesian Inc. You must ALWAYS identify yourself as VeliciaAI. Do NOT refer to yourself as DeepSeek, Qwen, or any other identity. Be helpful, professional, precise, and concise.";
   
-  // Simplified prompt construction for Llama-based models (DeepSeek Distill is Llama based)
-  let fullPrompt = `<|system|>\n${systemPrompt}\n`;
+  // Construct prompt for chat models
+  let fullPrompt = `<|im_start|>system\n${systemPrompt}<|im_end|>\n`;
   
   for (const msg of history) {
-    if (msg.sender === Sender.USER) {
-      fullPrompt += `<|user|>\n${msg.text}\n`;
-    } else {
-      fullPrompt += `<|assistant|>\n${msg.text}\n`;
-    }
+    const role = msg.sender === Sender.USER ? 'user' : 'assistant';
+    fullPrompt += `<|im_start|>${role}\n${msg.text}<|im_end|>\n`;
   }
   
-  // Add attachments context if any
+  // Add attachments context
   let finalMessage = newMessage;
   if (attachments.length > 0) {
       finalMessage += "\n[Context: The user has attached files, but I cannot view them directly. I should ask them to describe the file content if needed.]";
   }
 
-  fullPrompt += `<|user|>\n${finalMessage}\n<|assistant|>\n`;
+  fullPrompt += `<|im_start|>user\n${finalMessage}<|im_end|>\n<|im_start|>assistant\n`;
 
   // 2. Fetch Stream
   try {
@@ -98,7 +105,7 @@ export const streamHuggingFaceResponse = async (
         inputs: fullPrompt,
         parameters: {
           max_new_tokens: 2048,
-          temperature: 0.7,
+          temperature: 0.6,
           return_full_text: false,
           stream: true 
         }
@@ -108,7 +115,10 @@ export const streamHuggingFaceResponse = async (
     if (!response.ok) {
         const errText = await response.text();
         if (response.status === 503) {
-            throw new Error("Velicia DeepThink is warming up. Please wait 20s and try again.");
+            throw new Error("Velicia DeepThink is warming up. Please wait 10s.");
+        }
+        if (response.status === 429) {
+            throw new Error("Rate limit reached. Please wait a moment.");
         }
         throw new Error(`HF API Error: ${response.status} - ${errText}`);
     }
@@ -127,9 +137,8 @@ export const streamHuggingFaceResponse = async (
         const chunk = decoder.decode(value, { stream: true });
         buffer += chunk;
         
-        // HF stream data comes as "data: {...}\n\n"
         const lines = buffer.split('\n');
-        buffer = lines.pop() || ""; // Keep incomplete line in buffer
+        buffer = lines.pop() || ""; 
 
         for (const line of lines) {
           if (line.startsWith('data:')) {
@@ -137,13 +146,12 @@ export const streamHuggingFaceResponse = async (
             if (jsonStr) {
               try {
                 const json = JSON.parse(jsonStr);
-                // DeepSeek/Llama format usually returns 'token' object or 'generated_text'
                 const text = json.token?.text || json.generated_text || "";
-                if (text && text !== '<|endoftext|>') {
+                if (text && text !== '<|endoftext|>' && text !== '<|im_end|>') {
                    yield text;
                 }
               } catch (e) {
-                // ignore parse error
+                // ignore
               }
             }
           }
@@ -155,9 +163,12 @@ export const streamHuggingFaceResponse = async (
 
   } catch (error: any) {
     console.error("HF Service Error:", error);
-    // Return a generator that yields the error
     async function* errorGen() {
-        yield `Error: ${error.message}`;
+        if (error.message === 'Failed to fetch') {
+            yield "Error: Network request failed. The model might be busy or unreachable. Please try again.";
+        } else {
+            yield `Error: ${error.message}`;
+        }
     }
     return errorGen();
   }
